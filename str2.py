@@ -194,6 +194,22 @@ with col2:
 # Input area for new messages
 new_message = st.text_input("Type your message here...", key='new_message')
 if new_message:
-    st.session_state["user_query_history"].append(new_message)
-    st.session_state["chat_answers_history"].append("Your response here...")  # Placeholder for actual response
+    with st.spinner("Generating response..."):
+        combined_response = []
+        for pdf_name, db in st.session_state.vectordb.items():
+            try:
+                generated_response = run(db, new_message)
+                if isinstance(generated_response, dict) and 'result' in generated_response:
+                    response_text = f"**{pdf_name}:** {generated_response['result']}"
+                    combined_response.append(response_text)
+                else:
+                    combined_response.append(f"**{pdf_name}:** Error: Invalid response format")
+            except Exception as e:
+                combined_response.append(f"**{pdf_name}:** Error: {str(e)}")
+
+        formatted_response = "\n\n".join(combined_response)
+
+        st.session_state["user_query_history"].append(new_message)
+        st.session_state["chat_answers_history"].append(formatted_response)
+
     st.experimental_rerun()  # Rerun the app to update the chat history
