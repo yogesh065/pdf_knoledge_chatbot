@@ -123,17 +123,6 @@ if "user_query_history" not in st.session_state:
 if "chat_answers_history" not in st.session_state:
     st.session_state["chat_answers_history"] = []
 
-# Sidebar for chat history
-st.sidebar.title("Chat History")
-with st.sidebar:
-    for generated_response, user_query in zip(
-        st.session_state["chat_answers_history"],
-        st.session_state["user_query_history"],
-    ):
-        st.write(f"**User:** {user_query}")
-        st.write(f"**Response:** {generated_response}")
-        st.write("---")
-
 col1, col2 = st.columns([2, 3])
 
 with col1:
@@ -190,6 +179,7 @@ with col2:
             st.session_state["user_query_history"].append(query)
             st.session_state["chat_answers_history"].append(formatted_response)
 
+    # Display chat history
     if st.session_state["chat_answers_history"]:
         for generated_response, user_query in zip(
             st.session_state["chat_answers_history"],
@@ -197,3 +187,10 @@ with col2:
         ):
             message(user_query, is_user=True)
             message(generated_response)
+
+# Input area for new messages
+new_message = st.text_input("Type your message here...", key='new_message')
+if new_message:
+    st.session_state["user_query_history"].append(new_message)
+    st.session_state["chat_answers_history"].append("Your response here...")  # Placeholder for actual response
+    st.experimental_rerun()  # Rerun the app to update the chat history

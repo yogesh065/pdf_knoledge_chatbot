@@ -9,6 +9,8 @@ chainlit
 fastembed
 unstructured[md]
 streamlit 
+streamlit_chat
+
 InstructorEmbedding
 torch
 sentence_transformers
