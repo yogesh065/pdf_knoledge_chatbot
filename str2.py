@@ -182,7 +182,6 @@ with col2:
             st.session_state["user_query_history"].append(query)
             st.session_state["chat_answers_history"].append(formatted_response)
 
-        st.experimental_rerun()  # Rerun the app to update the chat history
 
     # Display chat history
     if st.session_state["chat_answers_history"]:
