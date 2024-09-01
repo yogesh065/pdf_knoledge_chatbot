@@ -188,9 +188,3 @@ with col2:
             message(user_query, is_user=True)
             message(generated_response)
 
-# Input area for new messages
-new_message = st.text_input("Type your message here...", key='new_message')
-if new_message:
-    st.session_state["user_query_history"].append(new_message)
-    st.session_state["chat_answers_history"].append("Your response here...")  # Placeholder for actual response
-    st.experimental_rerun()  # Rerun the app to update the chat history
