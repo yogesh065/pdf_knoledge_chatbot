@@ -38,15 +38,15 @@ batch_size = 166
 
 # Function to read and process PDF
 def pdf_reader(pdf_path):
-    start_time = time.time()  
-    
+    start_time = time.time()
+
     loader = PyPDFLoader(file_path=pdf_path)
     raw_documents = loader.load()
     print("1")
     print(f"loaded {len(raw_documents)} documents ")
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,  
+        chunk_size=1000,
         chunk_overlap=200,
         separators=["\n\n", "\n", " ", ""]
     )
@@ -55,7 +55,7 @@ def pdf_reader(pdf_path):
 
     embeddings = HuggingFaceEmbeddings(model_name=model_name)
     print("2")
-    
+
     vectordb = None
     for i in range(0, len(all_splits), batch_size):
         batch = all_splits[i:i + batch_size]
@@ -66,10 +66,10 @@ def pdf_reader(pdf_path):
 
     print("3")
 
-    end_time = time.time()  
-    elapsed_time = end_time - start_time  
+    end_time = time.time()
+    elapsed_time = end_time - start_time
     print(f"Time taken to execute the function: {elapsed_time:.2f} seconds")
-    
+
     return vectordb
 
 # Function to run the retrieval and generation process
@@ -88,7 +88,7 @@ def run(vectordb, query):
     )
 
     res = qa(query)
-    
+
     unique_sources = set()
     source_documents = []
     for doc in res['source_documents']:
@@ -104,7 +104,7 @@ def run(vectordb, query):
         "result": res['result'],
         "source_documents": source_documents
     }
-    
+
     return result
 
 # Streamlit app configuration
@@ -148,7 +148,7 @@ with col2:
         with st.spinner("Processing PDFs..."):
             pdf_directory = "pdfs"
             os.makedirs(pdf_directory, exist_ok=True)
-            
+
             vectordb = {}
             for pdf_ref in pdf_refs:
                 pdf_path = os.path.join(pdf_directory, pdf_ref.name)
@@ -182,6 +182,8 @@ with col2:
             st.session_state["user_query_history"].append(query)
             st.session_state["chat_answers_history"].append(formatted_response)
 
+        st.experimental_rerun()  # Rerun the app to update the chat history
+
     # Display chat history
     if st.session_state["chat_answers_history"]:
         for generated_response, user_query in zip(
@@ -190,26 +192,3 @@ with col2:
         ):
             message(user_query, is_user=True)
             message(generated_response)
-
-# Input area for new messages
-new_message = st.text_input("Type your message here...", key='new_message')
-if new_message:
-    with st.spinner("Generating response..."):
-        combined_response = []
-        for pdf_name, db in st.session_state.vectordb.items():
-            try:
-                generated_response = run(db, new_message)
-                if isinstance(generated_response, dict) and 'result' in generated_response:
-                    response_text = f"**{pdf_name}:** {generated_response['result']}"
-                    combined_response.append(response_text)
-                else:
-                    combined_response.append(f"**{pdf_name}:** Error: Invalid response format")
-            except Exception as e:
-                combined_response.append(f"**{pdf_name}:** Error: {str(e)}")
-
-        formatted_response = "\n\n".join(combined_response)
-
-        st.session_state["user_query_history"].append(new_message)
-        st.session_state["chat_answers_history"].append(formatted_response)
-
-    st.experimental_rerun()  # Rerun the app to update the chat history
