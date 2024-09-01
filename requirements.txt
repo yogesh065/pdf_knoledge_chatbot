@@ -18,3 +18,4 @@ streamlit_chat
 streamlit_pdf_viewer
 langchain-groq
 pypdf
+pysqlite3-binary
