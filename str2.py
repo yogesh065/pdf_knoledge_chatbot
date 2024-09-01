@@ -111,7 +111,10 @@ def run(vectordb, query):
 st.set_page_config(page_title="Text RAG Application")
 st.title("Text RAG Application")
 
-# Initialize session state
+# Initialize session state for each user
+if 'session_id' not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+
 if 'pdf_refs' not in st.session_state:
     st.session_state.pdf_refs = []
 if 'vectordb' not in st.session_state:
@@ -188,3 +191,9 @@ with col2:
             message(user_query, is_user=True)
             message(generated_response)
 
+# Input area for new messages
+new_message = st.text_input("Type your message here...", key='new_message')
+if new_message:
+    st.session_state["user_query_history"].append(new_message)
+    st.session_state["chat_answers_history"].append("Your response here...")  # Placeholder for actual response
+    st.experimental_rerun()  # Rerun the app to update the chat history
