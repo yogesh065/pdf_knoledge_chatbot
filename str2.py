@@ -25,7 +25,7 @@ os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 api_key_ = os.getenv("LANGCHAIN_API_KEY")
 client = Client(api_key=api_key_)
 api_key = os.getenv("GROQ_API_KEY")
-api_key=st.secrets["k"]("api_key")
+api_key=st.secrets["k"]["api_key"]
 # Initialize Groq client
 client = Groq(api_key=api_key)
 
