@@ -6,10 +6,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
 from groq import Groq
-from langsmith import traceable
 from langchain import hub
 from langsmith import Client
-from langsmith.evaluation import evaluate
 import uuid
 import streamlit as st 
 

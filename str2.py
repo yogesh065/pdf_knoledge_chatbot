@@ -2,7 +2,6 @@ import os
 import streamlit as st
 from streamlit_chat import message
 from streamlit_pdf_viewer import pdf_viewer
-from dotenv import load_dotenv, find_dotenv
 from langchain_core.runnables import RunnablePassthrough, RunnableMap
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -19,9 +18,6 @@ import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 # Load environment variables
-load_dotenv(find_dotenv())
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 api_key_ = os.getenv("LANGCHAIN_API_KEY")
 api_key = os.getenv("GROQ_API_KEY")
 api_key = st.secrets["k"]["api_key"]
@@ -31,7 +27,7 @@ from streamlit_chat import message
 from streamlit_pdf_viewer import pdf_viewer
 
 import os
-from rag import run,eval_
+from rag import run
 from pdf_reader_fun import pdf_reader
 
 st.set_page_config(page_title="Text RAG Application")
