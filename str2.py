@@ -11,7 +11,6 @@ from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
 from groq import Groq
 from langsmith import traceable, Client
-from langsmith.evaluation import evaluate
 import uuid
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -28,13 +27,31 @@ os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 api_key_ = os.getenv("LANGCHAIN_API_KEY")
 client = Client(api_key=api_key_)
 api_key = os.getenv("GROQ_API_KEY")
-api_key=st.secrets["k"]["api_key"]
+api_key = st.secrets["k"]["api_key"]
+
 # Initialize Groq client
 client = Groq(api_key=api_key)
 
 # Model configuration
 model_name = "sentence-transformers/all-mpnet-base-v2"
 batch_size = 166
+
+# Initialize session state for each user
+def init_session_state():
+    if 'session_id' not in st.session_state:
+        st.session_state.session_id = str(uuid.uuid4())
+    if 'pdf_refs' not in st.session_state:
+        st.session_state.pdf_refs = []
+    if 'vectordb' not in st.session_state:
+        st.session_state.vectordb = None
+    if 'pdf_view' not in st.session_state:
+        st.session_state.pdf_view = None
+    if "user_query_history" not in st.session_state:
+        st.session_state["user_query_history"] = []
+    if "chat_answers_history" not in st.session_state:
+        st.session_state["chat_answers_history"] = []
+
+init_session_state()
 
 # Function to read and process PDF
 def pdf_reader(pdf_path):
@@ -111,21 +128,6 @@ def run(vectordb, query):
 st.set_page_config(page_title="Text RAG Application")
 st.title("Text RAG Application")
 
-# Initialize session state for each user
-if 'session_id' not in st.session_state:
-    st.session_state.session_id = str(uuid.uuid4())
-
-if 'pdf_refs' not in st.session_state:
-    st.session_state.pdf_refs = []
-if 'vectordb' not in st.session_state:
-    st.session_state.vectordb = None
-if 'pdf_view' not in st.session_state:
-    st.session_state.pdf_view = None
-if "user_query_history" not in st.session_state:
-    st.session_state["user_query_history"] = []
-if "chat_answers_history" not in st.session_state:
-    st.session_state["chat_answers_history"] = []
-
 col1, col2 = st.columns([2, 3])
 
 with col1:
@@ -144,6 +146,7 @@ with col1:
 with col2:
     query = st.text_input("Query", key='query', placeholder="Enter your query here...")
 
+    @st.cache_data(ttl=3600)
     def process_pdfs_to_vectordb(pdf_refs):
         with st.spinner("Processing PDFs..."):
             pdf_directory = "pdfs"
@@ -182,12 +185,11 @@ with col2:
             st.session_state["user_query_history"].append(query)
             st.session_state["chat_answers_history"].append(formatted_response)
 
-
-    # Display chat history
-    if st.session_state["chat_answers_history"]:
-        for generated_response, user_query in zip(
-            st.session_state["chat_answers_history"],
-            st.session_state["user_query_history"],
-        ):
-            message(user_query, is_user=True)
-            message(generated_response)
+# Display chat history
+if st.session_state["chat_answers_history"]:
+    for generated_response, user_query in zip(
+        st.session_state["chat_answers_history"],
+        st.session_state["user_query_history"],
+    ):
+        message(user_query, is_user=True)
+        message(generated_response)
