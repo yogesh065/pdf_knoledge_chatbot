@@ -11,13 +11,14 @@ from langchain import hub
 from langsmith import Client
 from langsmith.evaluation import evaluate
 import uuid
+import streamlit as st 
 
 load_dotenv(load_dotenv(find_dotenv()))
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 api_key_=os.getenv("LANGCHAIN_API_KEY")
-client = Client(api_key=api_key_)
 api_key = os.getenv("GROQ_API_KEY")
+api_key = st.secrets["k"]["api_key"]
 
 client = Groq(api_key=api_key)
 def run(vectordb, query):
