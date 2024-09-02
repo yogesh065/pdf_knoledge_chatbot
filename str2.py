@@ -9,7 +9,6 @@ from langchain_core.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
 from groq import Groq
-from langsmith import traceable, Client
 import uuid
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -24,7 +23,6 @@ load_dotenv(find_dotenv())
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 api_key_ = os.getenv("LANGCHAIN_API_KEY")
-client = Client(api_key=api_key_)
 api_key = os.getenv("GROQ_API_KEY")
 api_key = st.secrets["k"]["api_key"]
 
