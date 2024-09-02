@@ -12,9 +12,6 @@ import uuid
 import streamlit as st 
 
 load_dotenv(load_dotenv(find_dotenv()))
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
-api_key_=os.getenv("LANGCHAIN_API_KEY")
 api_key = os.getenv("GROQ_API_KEY")
 api_key = st.secrets["k"]["api_key"]
 
