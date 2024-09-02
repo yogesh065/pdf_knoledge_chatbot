@@ -35,27 +35,24 @@ st.title("Text RAG Application")
 
 st.sidebar.title("Chat History")
 
-# Create a unique session state for each user
-if 'user_id' not in st.session_state:
-    st.session_state['user_id'] = str(uuid.uuid4())
-
-# Initialize session state
 if 'pdf_refs' not in st.session_state:
-    st.session_state['pdf_refs'] = {}
+    st.session_state.pdf_refs = []
 if 'vectordb' not in st.session_state:
-    st.session_state['vectordb'] = {}
+    st.session_state.vectordb = None
 if 'pdf_view' not in st.session_state:
-    st.session_state['pdf_view'] = None
+    st.session_state.pdf_view = None
 
-if "user_query_history" not in st.session_state['vectordb']:
-    st.session_state['vectordb']["user_query_history"] = []
-if "chat_answers_history" not in st.session_state['vectordb']:
-    st.session_state['vectordb']["chat_answers_history"] = []
+if "user_query_history" not in st.session_state:
+    st.session_state["user_query_history"] = []
+
+if "chat_answers_history" not in st.session_state:
+    st.session_state["chat_answers_history"] = []
+
 
 with st.sidebar:
     for generated_response, user_query in zip(
-        st.session_state['vectordb']["chat_answers_history"],
-        st.session_state['vectordb']["user_query_history"],
+        st.session_state["chat_answers_history"],
+        st.session_state["user_query_history"],
     ):
         st.write(f"**User:** {user_query}")
         st.write(f"**Response:** {generated_response}")
@@ -67,13 +64,13 @@ with col1:
     uploaded_pdfs = st.file_uploader("Upload PDF files", type='pdf', accept_multiple_files=True, key='pdfs')
 
     if uploaded_pdfs:
-        st.session_state['pdf_refs'][st.session_state['user_id']] = uploaded_pdfs
+        st.session_state.pdf_refs = uploaded_pdfs
 
-    for pdf_ref in st.session_state['pdf_refs'][st.session_state['user_id']]:
+    for pdf_ref in st.session_state.pdf_refs:
         if st.button(f"View {pdf_ref.name}"):
-            st.session_state['pdf_view'] = pdf_ref
+            st.session_state.pdf_view = pdf_ref
 
-        if st.session_state['pdf_view'] == pdf_ref:
+        if st.session_state.pdf_view == pdf_ref:
             binary_data = pdf_ref.getvalue()
             pdf_viewer(input=binary_data, width=700, height=600)
 
@@ -84,7 +81,7 @@ with col2:
         with st.spinner("Processing PDFs..."):
             pdf_directory = "pdfs"
             os.makedirs(pdf_directory, exist_ok=True)
-
+            
             vectordb = {}
             for pdf_ref in pdf_refs:
                 pdf_path = os.path.join(pdf_directory, pdf_ref.name)
@@ -94,18 +91,18 @@ with col2:
 
             return vectordb
 
-    if st.session_state['pdf_refs'][st.session_state['user_id']] and not st.session_state['vectordb'].get(st.session_state['user_id']):
-        st.session_state['vectordb'][st.session_state['user_id']] = process_pdfs_to_vectordb(st.session_state['pdf_refs'][st.session_state['user_id']])
+    if st.session_state.pdf_refs and not st.session_state.vectordb:
+        st.session_state.vectordb = process_pdfs_to_vectordb(st.session_state.pdf_refs)
 
-    if query and st.session_state['vectordb'].get(st.session_state['user_id']):
+    if query and st.session_state.vectordb:
         with st.spinner("Generating response..."):
             combined_response = []
-            for pdf_name, db in st.session_state['vectordb'][st.session_state['user_id']].items():
+            for pdf_name, db in st.session_state.vectordb.items():
                 generated_response = run(db, query)
                 if isinstance(generated_response, dict) and 'result' in generated_response:
                     response_text = f"**{pdf_name}:** {generated_response['result']}"
                     combined_response.append(response_text)
-
+                    
 
                 else:
                     combined_response.append(f"**{pdf_name}:** Error: Invalid response format")
@@ -114,13 +111,13 @@ with col2:
 
             st.write("Generated Response:", formatted_response)
 
-            st.session_state['vectordb'][st.session_state['user_id']]["user_query_history"].append(query)
-            st.session_state['vectordb'][st.session_state['user_id']]["chat_answers_history"].append(formatted_response)
+            st.session_state["user_query_history"].append(query)
+            st.session_state["chat_answers_history"].append(formatted_response)
 
-    if st.session_state['vectordb'].get(st.session_state['user_id']) and st.session_state['vectordb'][st.session_state['user_id']].get("chat_answers_history"):
+    if st.session_state["chat_answers_history"]:
         for generated_response, user_query in zip(
-            st.session_state['vectordb'][st.session_state['user_id']]["chat_answers_history"],
-            st.session_state['vectordb'][st.session_state['user_id']]["user_query_history"],
+            st.session_state["chat_answers_history"],
+            st.session_state["user_query_history"],
         ):
             message(user_query, is_user=True)
             message(generated_response)
