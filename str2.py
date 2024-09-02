@@ -1,5 +1,4 @@
 import os
-import time
 import streamlit as st
 from streamlit_chat import message
 from streamlit_pdf_viewer import pdf_viewer
@@ -40,16 +39,18 @@ batch_size = 166
 def init_session_state():
     if 'session_id' not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
-    if 'pdf_refs' not in st.session_state:
-        st.session_state.pdf_refs = []
+    if 'pdfRefs' not in st.session_state:
+        st.session_state.pdfRefs = []
+    if 'pdfView' not in st.session_state:
+        st.session_state.pdfView = None
+    if 'pdfFiles' not in st.session_state:
+        st.session_state.pdfFiles = {}
     if 'vectordb' not in st.session_state:
-        st.session_state.vectordb = None
-    if 'pdf_view' not in st.session_state:
-        st.session_state.pdf_view = None
-    if "user_query_history" not in st.session_state:
-        st.session_state["user_query_history"] = []
-    if "chat_answers_history" not in st.session_state:
-        st.session_state["chat_answers_history"] = []
+        st.session_state.vectordb = {}
+    if "userQueryHistory" not in st.session_state:
+        st.session_state["userQueryHistory"] = []
+    if "chatAnswersHistory" not in st.session_state:
+        st.session_state["chatAnswersHistory"] = []
 
 init_session_state()
 
@@ -111,25 +112,26 @@ col1, col2 = st.columns([2, 3])
 with col1:
     uploaded_pdfs = st.file_uploader("Upload PDF files", type='pdf', accept_multiple_files=True, key='pdfs')
     if uploaded_pdfs:
-        st.session_state.pdf_refs = uploaded_pdfs
-    for pdf_ref in st.session_state.pdf_refs:
-        if st.button(f"View {pdf_ref.name}"):
-            st.session_state.pdf_view = pdf_ref
-        if st.session_state.pdf_view == pdf_ref:
-            binary_data = pdf_ref.getvalue()
+        if not st.session_state.pdfFiles:
+            st.session_state.pdfFiles = {}
+        for pdf_ref in uploaded_pdfs:
+            pdf_bytes = pdf_ref.getvalue()
+            if pdf_ref.name not in st.session_state.pdfFiles:
+                st.session_state.pdfFiles[pdf_ref.name] = pdf_bytes
+                if pdf_ref.name not in st.session_state.vectordb:
+                    st.session_state.vectordb[pdf_ref.name] = pdf_reader(os.path.join("pdfs", pdf_ref.name))
+                else:
+                    st.session_state.vectordb[pdf_ref.name].add_documents(documents=pdf_reader(os.path.join("pdfs", pdf_ref.name)).get_documents()[0])
+            st.session_state.pdfRefs = [pdf_key for pdf_key in st.session_state.pdfFiles.keys()]
+    for pdf_ref in st.session_state.pdfRefs:
+        if st.button(f"View {pdf_ref}"):
+            st.session_state.pdfView = pdf_ref
+        if st.session_state.pdfView == pdf_ref:
+            binary_data = st.session_state.pdfFiles[pdf_ref]
             pdf_viewer(input=binary_data, width=700, height=600)
 
 with col2:
     query = st.text_input("Query", key='query', placeholder="Enter your query here...")
-    if st.session_state.pdf_refs:
-        st.session_state.vectordb = {}
-        for pdf_ref in st.session_state.pdf_refs:
-            pdf_path = os.path.join("pdfs", pdf_ref.name)
-            if pdf_ref.name in st.session_state.vectordb:
-                vectordb = st.session_state.vectordb[pdf_ref.name]
-                vectordb.add_documents(documents=pdf_reader(pdf_path).get_documents()[0])
-            else:
-                st.session_state.vectordb[pdf_ref.name] = pdf_reader(pdf_path)
     if query and st.session_state.vectordb:
         combined_response = []
         for pdf_name, db in st.session_state.vectordb.items():
@@ -144,14 +146,14 @@ with col2:
                 combined_response.append(f"**{pdf_name}:** Error: {str(e)}")
         formatted_response = "\n\n".join(combined_response)
         st.write("Generated Response:", formatted_response)
-        st.session_state["user_query_history"].append(query)
-        st.session_state["chat_answers_history"].append(formatted_response)
+        st.session_state["userQueryHistory"].append(query)
+        st.session_state["chatAnswersHistory"].append(formatted_response)
 
 # Display chat history
-if st.session_state["chat_answers_history"]:
+if st.session_state["chatAnswersHistory"]:
     for generated_response, user_query in zip(
-        st.session_state["chat_answers_history"],
-        st.session_state["user_query_history"],
+        st.session_state["chatAnswersHistory"],
+        st.session_state["userQueryHistory"],
     ):
         message(user_query, is_user=True)
         message(generated_response)
