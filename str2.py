@@ -101,7 +101,6 @@ with col2:
                 generated_response = run(db, query)
                 if isinstance(generated_response, dict) and 'result' in generated_response:
                     response_text = f"**{pdf_name}:** {generated_response['result']}"
-                    _=eval_(generated_response["result"])
                     combined_response.append(response_text)
                     
 
